@@ -5,8 +5,9 @@ const char* password = "CoachGroepTiuri";
 WiFiServer server(80);
 
 String header;
-String gpioState[2] = {"off", "off"}, wasdState[4] = {"Released", "Released", "Released", "Released"};
-bool wasdPressed[4] = {false, false, false, false}; // Tracks W, A, S, D key states
+String gpioState[2] = {"off", "off"}, keyState[5] = {"Released", "Released", "Released", "Released", "Released"};
+bool keyPressed[5] = {false, false, false, false, false}; // Tracks W, A, S, D, Shift keys
+bool sendExtraKey[5] = {false, false, false, false, false}; // Flags to send extra key press after another key is released
 const int gpios[2] = {26, 27}; // GPIO pin 26 and 27
 
 void setup() {
@@ -19,14 +20,58 @@ void setup() {
 }
 
 void handleKey(int index, const String& state) {
-  if (state == "Pressed" && !wasdPressed[index]) {
-    wasdPressed[index] = true;
-    wasdState[index] = "Pressed";
-    Serial.printf("%c key pressed\n", 'W' + index); // W, A, S, D based on index
+  if (state == "Pressed" && !keyPressed[index]) {
+    keyPressed[index] = true;
+    keyState[index] = "Pressed";
+    
+    // Print appropriate label based on key index
+    if (index == 0) {
+      Serial.println("W key pressed");
+    } else if (index == 1) {
+      Serial.println("X key pressed");  // Changed A to X
+    } else if (index == 2) {
+      Serial.println("Y key pressed");  // Changed S to Y
+    } else if (index == 3) {
+      Serial.println("Z key pressed");  // Changed D to Z
+    } else {
+      Serial.println("Shift key pressed");
+    }
+
+    // Set extra key flag for other keys when this key is pressed
+    for (int i = 0; i < 5; i++) {
+      if (i != index && keyPressed[i]) {
+        sendExtraKey[i] = true;
+      }
+    }
   } else if (state == "Released") {
-    wasdPressed[index] = false;
-    wasdState[index] = "Released";
-    Serial.printf("%c key released\n", 'W' + index);
+    keyPressed[index] = false;
+    keyState[index] = "Released";
+
+    // Print appropriate label based on key index
+    if (index == 0) {
+      Serial.println("W key released");
+    } else if (index == 1) {
+      Serial.println("X key released");  // Changed A to X
+    } else if (index == 2) {
+      Serial.println("Y key released");  // Changed S to Y
+    } else if (index == 3) {
+      Serial.println("Z key released");  // Changed D to Z
+    } else {
+      Serial.println("Shift key released");
+    }
+
+    // Check if any other key is still pressed and send extra press if needed
+    for (int i = 0; i < 5; i++) {
+      if (sendExtraKey[i] && keyPressed[i]) {
+        if (i == 0) Serial.println("W key pressed");
+        else if (i == 1) Serial.println("X key pressed");
+        else if (i == 2) Serial.println("Y key pressed");
+        else if (i == 3) Serial.println("Z key pressed");
+        else Serial.println("Shift key pressed");
+
+        sendExtraKey[i] = false; // Reset the flag
+      }
+    }
   }
 }
 
@@ -58,6 +103,8 @@ void loop() {
         if (header.indexOf("GET /s/release") >= 0) handleKey(2, "Released");
         if (header.indexOf("GET /d/press") >= 0) handleKey(3, "Pressed");
         if (header.indexOf("GET /d/release") >= 0) handleKey(3, "Released");
+        if (header.indexOf("GET /shift/press") >= 0) handleKey(4, "Pressed");
+        if (header.indexOf("GET /shift/release") >= 0) handleKey(4, "Released");
 
         client.println("HTTP/1.1 200 OK\nContent-type:text/html\nConnection: close\n");
         client.println("<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">");
@@ -71,12 +118,12 @@ void loop() {
             gpios[i], gpioState[i] == "off" ? "on" : "off", gpioState[i] == "off" ? "On" : "Off", gpios[i]);
         }
 
-        // WASD key states
-        client.printf("<p>W Key: %s</p><p>A Key: %s</p><p>S Key: %s</p><p>D Key: %s</p>", 
-                      wasdState[0].c_str(), wasdState[1].c_str(), wasdState[2].c_str(), wasdState[3].c_str());
+        // WASD and Shift key states
+        client.printf("<p>W Key: %s</p><p>X Key: %s</p><p>Y Key: %s</p><p>Z Key: %s</p><p>Shift Key: %s</p>", 
+                      keyState[0].c_str(), keyState[1].c_str(), keyState[2].c_str(), keyState[3].c_str(), keyState[4].c_str());
 
-        // JavaScript to handle WASD key presses
-        client.println("<script>let keys={w:false,a:false,s:false,d:false};['w','a','s','d'].forEach(k=>{document.addEventListener('keydown',e=>{if(e.key==k&&!keys[k]){fetch('/'+k+'/press').catch(console.error);keys[k]=true}});document.addEventListener('keyup',e=>{if(e.key==k){fetch('/'+k+'/release').catch(console.error);keys[k]=false}})});</script>");
+        // JavaScript to handle WASD and Shift key presses
+        client.println("<script>let keys={w:false,a:false,s:false,d:false,shift:false};['w','a','s','d','shift'].forEach(k=>{document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==k&&!keys[k]){fetch('/'+k+'/press').catch(console.error);keys[k]=true}});document.addEventListener('keyup',e=>{if(e.key.toLowerCase()==k){fetch('/'+k+'/release').catch(console.error);keys[k]=false}})});</script>");
         client.println("</body></html>");
         
         client.stop();
