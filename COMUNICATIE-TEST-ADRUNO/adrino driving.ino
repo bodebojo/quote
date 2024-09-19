@@ -2,9 +2,12 @@
 #include <SoftwareSerial.h> // For software serial communication if needed
 SoftwareSerial espSerial(13, 15); // Adjust pins if necessary
 int speed = 500;
+
+
 void setup() {
   Serial.begin(9600); // Initialize serial communication with the computer
-  espSerial.begin(9600); // Initialize serial communication with the ESP
+  espSerial.begin(9600); // Initialize serial communication with the ESP`
+  
 }
 
 void loop() {
@@ -13,15 +16,17 @@ void loop() {
     // Read the incoming data as a string
     String incomingData = Serial.readStringUntil('\n');
     incomingData.trim(); // Remove any trailing whitespace
-
+    Serial.println(speed);
     // Print the received data
     Serial.println(incomingData);
     // Set speed based on shift input
     if (incomingData == "Shift key pressed") {
-      int speed = 1000;
+    speed = 1000;
+      setLed(0, 255, 0);
     }
     else if (incomingData == "Shift key released") {
-    int speed = 500;
+    speed = 500;
+    setLed(0, 0, 255);
     }
     // Compare the incoming data
     if (incomingData == "W key pressed") {
