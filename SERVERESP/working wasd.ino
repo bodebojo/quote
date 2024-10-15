@@ -4,11 +4,15 @@ const char* ssid = "CoachGroepTiuri";
 const char* password = "CoachGroepTiuri";
 WiFiServer server(80);
 
+// Password protection
+const String webpagePassword = "Qote"; // Replace with your desired password
+
 String header;
 String gpioState[2] = {"off", "off"}, keyState[5] = {"Released", "Released", "Released", "Released", "Released"};
 bool keyPressed[5] = {false, false, false, false, false}; // Tracks W, A, S, D, Shift keys
 bool sendExtraKey[5] = {false, false, false, false, false}; // Flags to send extra key press after another key is released
 const int gpios[2] = {26, 27}; // GPIO pin 26 and 27
+bool authenticated = false;
 
 void setup() {
   Serial.begin(9600);
@@ -23,7 +27,7 @@ void handleKey(int index, const String& state) {
   if (state == "Pressed" && !keyPressed[index]) {
     keyPressed[index] = true;
     keyState[index] = "Pressed";
-    
+
     // Print appropriate label based on key index
     if (index == 0) {
       Serial.println("W key pressed");
@@ -90,6 +94,34 @@ void loop() {
       char c = client.read();
       header += c;
       if (c == '\n') {
+        // Parse the header for password
+        if (header.indexOf("GET /?password=") >= 0) {
+          int passwordIndex = header.indexOf("password=") + 9;
+          String receivedPassword = header.substring(passwordIndex, header.indexOf(' ', passwordIndex));
+
+          // Check if the password matches
+          if (receivedPassword == webpagePassword) {
+            authenticated = true;
+          } else {
+            authenticated = false;
+          }
+        }
+
+        // If not authenticated, prompt for password
+        if (!authenticated) {
+          client.println("HTTP/1.1 200 OK\nContent-type:text/html\nConnection: close\n");
+          client.println("<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">");
+          client.println("<body><h1>Password Required</h1>");
+          client.println("<script>");
+          client.println("let password = prompt('Please enter the password:');");
+          client.println("if (password) { window.location.href = '/?password=' + password; }");
+          client.println("</script></body></html>");
+          client.stop();
+          header = "";
+          return;
+        }
+
+        // Handle GPIO and key requests if authenticated
         if (header.indexOf("GET /26/on") >= 0) handleGPIO(0, true);
         if (header.indexOf("GET /26/off") >= 0) handleGPIO(0, false);
         if (header.indexOf("GET /27/on") >= 0) handleGPIO(1, true);
@@ -109,7 +141,7 @@ void loop() {
         client.println("HTTP/1.1 200 OK\nContent-type:text/html\nConnection: close\n");
         client.println("<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">");
         client.println("<style>html{font-family:Helvetica;text-align:center}.button{padding:16px 40px;background:#4CAF50;color:white;border:none;margin:2px;font-size:30px}</style></head>");
-        client.println("<body><h1>ESP8266 Web Server</h1>");
+        client.println("<body><h1>QOTE</h1>");
 
         // GPIO 26 and 27 buttons
         for (int i = 0; i < 2; i++) {
