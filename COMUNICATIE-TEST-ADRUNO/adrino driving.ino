@@ -1,24 +1,13 @@
 #include <Leaphyoriginal1.h>
 #include <SoftwareSerial.h> // For software serial communication if needed
-#include <LiquidCrystal_I2C.h>
-#include <Wire.h>
-
 SoftwareSerial espSerial(13, 15); // Adjust pins if necessary
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
 int speed = 500;
-int i, n, sum = 0;  // Declaration of variables 'i' for iteration, 'n' to store each number, and 'sum' to store their total sum
-  double avg;  // Declaration of variable 'avg' to store the average
 
 
 void setup() {
   Serial.begin(9600); // Initialize serial communication with the computer
   espSerial.begin(9600); // Initialize serial communication with the ESP`
-
-  lcd.init();
-  lcd.backlight();
-  lcd.setCursor(0,1);
-  lcd.print("^-^");
+  
 }
 
 void loop() {
@@ -27,23 +16,20 @@ void loop() {
     // Read the incoming data as a string
     String incomingData = Serial.readStringUntil('\n');
     incomingData.trim(); // Remove any trailing whitespace
+    Serial.println(speed);
     // Print the received data
     Serial.println(incomingData);
     // Set speed based on shift input
-    
-    
     if (incomingData == "Shift key pressed") {
-      speed = 500;
+    speed = 1000;
       setLed(0, 255, 0);
-      Serial.println(speed);
     }
     else if (incomingData == "Shift key released") {
-      speed = 250;
-      setLed(0, 0, 255);
-      Serial.println(speed);
+    speed = 500;
+    setLed(0, 0, 255);
     }
     // Compare the incoming data
-    else if (incomingData == "W key pressed") {
+    if (incomingData == "W key pressed") {
       setMotor(10, speed);
       setMotor(9, speed);
       Serial.println("Received command1");
@@ -59,32 +45,10 @@ void loop() {
     else if (incomingData == "Z key pressed") {
       setMotor(10, speed/2.5);
       setMotor(9, -speed/2.5);
-    }
-    else if (incomingData == "Shift key pressed") {
-      speed = 500;
-      Serial.println(speed);
-      setLed(0, 255, 0);
-      
-    }
-    else if (incomingData == "Shift key released") {
-      speed = 250;
-      Serial.println(speed);
-      setLed(0, 0, 255);
-      
-    }
+    } 
     else{ 
       setMotor(9, 0);
       setMotor(10, 0);    
     }
   }
-
-  // Loop to read 100 numbers
-  for (i = 1; i <= 100; i++)  {
-    n = getDistance();
-    sum += n;
-  }
-
-  avg = sum / 100.0;
-  
-  Serial.println(avg);
 }
