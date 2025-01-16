@@ -127,36 +127,36 @@ void move() {
       setLed(0, 255, 0);
       Serial.println(speed);
     }
-    else if (incomingData == "Shift key released") {
+    if (incomingData == "Shift key released") {
       speed = 250;
       setLed(0, 0, 255);
       Serial.println(speed);
     }
     // Compare the incoming data
-    else if (incomingData == "W key pressed") {
+    if (incomingData == "W key pressed") {
       setMotor(10, speed);
       setMotor(9, speed);
       Serial.println("Received command1");
     }
-    else if (incomingData == "Y key pressed") {
+    if (incomingData == "Y key pressed") {
       setMotor(10, -speed);
       setMotor(9, -speed);
     }
-    else if (incomingData == "X key pressed") {
+    if (incomingData == "X key pressed") {
       setMotor(10, -speed/2.5);
       setMotor(9, speed/2.5);
     } 
-    else if (incomingData == "Z key pressed") {
+    if (incomingData == "Z key pressed") {
       setMotor(10, speed/2.5);
       setMotor(9, -speed/2.5);
     }
-    else if (incomingData == "Shift key pressed") {
+    if (incomingData == "Shift key pressed") {
       speed = 500;
       Serial.println(speed);
       setLed(0, 255, 0);
       
     }
-    else if (incomingData == "Shift key released") {
+    if (incomingData == "Shift key released") {
       speed = 250;
       Serial.println(speed);
       setLed(0, 0, 255);
@@ -167,31 +167,57 @@ void move() {
       setMotor(10, 0);    
     }
   }
-  if n=
 }
 
 void get_distance() {
   // Loop to read loop_amount numbers
   int loop_amount = 10;
-  int i, n, sum = 0;  // Declaration of variables 'i' for iteration, 'n' to store each number, and 'sum' to store their total sum
+  int loop_count = 0;
+  int i, n, prev_n, sum = 0; // Declaration of variables 'i' for iteration, 'n' to store each number, and 'sum' to store their total sum
   for (i = 1; i <= loop_amount; i++) {
     n = getDistance(); // Get the distance from the sensor
-    n = constrain(n, 1, 256); // Limit the distance to 1-256
+    if (prev_n == 0) {prev_n = n;}
+    n = constrain(n, (prev_n-5), (prev_n+5)); // Limit the distance
     sum += n; // Add the distance to the sum
-    delay(100);
+    prev_n = n; // Record the old distance in prev_n
+    delay(25);
   }
-
+  loop_count++;
   avg_dis = sum / loop_amount; // Calculate the average distance
+  print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.25);
 
-  if (i = loop_amount) { // Reset the sum and i
-    sum = 0;
-    i = 0;
+  if (loop_count = 10) {
+    // Serial.println("Average distance: ");
+    // Serial.println(avg_dis); // Print the average distance to the serial monitor
+    loop_count = 0;
   }
-
-  Serial.println("Average distance: ");
-  Serial.println(avg_dis); // Print the average distance to the serial monitor
+  i = 0;
+  sum = 0;
 }
 
+void get_line_information() {
+  int leftLineValue = getLineFollower(LEFT);  // Read the value of the left line follower sensor.
+  int rightLineValue = getLineFollower(RIGHT); // Read the value of the right line follower sensor.
+
+  if (leftLineValue == 0 && rightLineValue == 0)
+  {
+      // The robot is on the line.
+      Serial.println("The robot is on the line.");
+  }
+  else if (leftLineValue == 0 && rightLineValue == 1)
+  {
+      // The robot is to the left of the line.
+      Serial.println("The robot is to the left of the line.");
+  }
+  else if (leftLineValue == 1 && rightLineValue == 0)
+  {
+      // The robot is to the right of the line.
+      Serial.println("The robot is to the right of the line.");
+  }
+  else {
+    Serial.println("The robot is flying in space and cant see a line no matter how far it looks.");
+  }
+}
 
 void print_to_lcd(String first_line, String second_line, int pause) {
   float pause_ms = pause * 1000;
@@ -208,7 +234,8 @@ void loop() {
   move();
   get_distance();
 
-  print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.25);
   avg_dis = 0;
 
+  Serial.println(digitalRead(16));
+  // get_line_information();
 }
