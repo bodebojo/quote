@@ -197,9 +197,8 @@ void get_distance() {
 
 void get_line_information() {
 
-
-  int leftLineValue = digitalRead(17);  // Read the value of the left line follower sensor.
   int rightLineValue = digitalRead(16); // Read the value of the right line follower sensor.
+  int leftLineValue = digitalRead(17);  // Read the value of the left line follower sensor.
 
   if (leftLineValue == 0 && rightLineValue == 0)
   {
@@ -238,6 +237,8 @@ void loop() {
 
   avg_dis = 0;
 
-  int pin16State = digitalRead(18);
-  Serial.println("Pin 18 state: " + String(pin16State)); 
+  int pin16State = digitalRead(16);
+  Serial.println("Pin 16 state: " + String(pin16State));
+  int pin17State = digitalRead(17);
+  Serial.println("Pin 17 state: " + String(pin17State));  
 }
