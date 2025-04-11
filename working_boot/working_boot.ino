@@ -80,15 +80,15 @@ void loop() {
       setMotor(9, speed);
       Serial.println("Received command1");
     }
-    else if (incomingData == "Y key pressed") {
+    else if (incomingData == "S key pressed") {
       setMotor(10, -speed);
       setMotor(9, -speed);
     }
-    else if (incomingData == "X key pressed") {
+    else if (incomingData == "A key pressed") {
       setMotor(10, -speed/2.5);
       setMotor(9, speed/2.5);
     } 
-    else if (incomingData == "Z key pressed") {
+    else if (incomingData == "D key pressed") {
       setMotor(10, speed/2.5);
       setMotor(9, -speed/2.5);
     }
@@ -124,13 +124,13 @@ void loop() {
     i = 0;
   }
 
-  Serial.println("Average distance: ");
-  Serial.println(avg);
+  // Serial.println("Average distance: ");
+  // Serial.println(avg);
 
-  lcd.setCursor(0,0);
-  lcd.print("AVG distance: ");
-  lcd.setCursor(0,1);
-  lcd.print(avg);
+  // lcd.setCursor(0,0);
+  // lcd.print("AVG distance: ");
+  // lcd.setCursor(0,1);
+  // lcd.print(avg);
 
   avg = 0;
 

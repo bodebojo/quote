@@ -114,174 +114,161 @@ void setup() {
 }
 
 void move(int mode) {
-  Serial.println(mode);
   String incomingData = Serial.readStringUntil('\n');
   incomingData.trim();
 
-  if (incomingData == "CDM1") {
-    mode = 1;
-  }
-  if (incomingData == "CDM2") {
-    mode = 2;
-  }
-  if (incomingData == "CDM3") {
-    mode = 3;
-  }
+  if (incomingData.startsWith("Change Driving Mode: ")) {
+    String modeNumberString = incomingData.substring(3); // Get the number part
+    int mode = modeNumberString.toInt(); // Convert the number part to an integer
 
-  if (mode == 1) {
-    // Check if there is incoming data on the serial
-    if (Serial.available()) {
-      // Read the incoming data as a string
-      String incomingData = Serial.readStringUntil('\n');
-      incomingData.trim(); // Remove any trailing whitespace
-      // Print the received data
-      Serial.println(incomingData);
-      // Set speed based on shift input
-      
-      if (incomingData == "Shift key pressed") {
-        speed = 500;
-        setLed(0, 255, 0);
-        Serial.println(speed);
-      }
-      if (incomingData == "Shift key released") {
-        speed = 250;
-        setLed(0, 0, 255);
-        Serial.println(speed);
-      }
-      // Compare the incoming data
-      if (incomingData == "W key pressed") {
-        setMotor(10, speed);
-        setMotor(9, speed);
-      }
-      if (incomingData == "S key pressed") {
-        setMotor(10, -speed);
-        setMotor(9, -speed);
-      }
-      if (incomingData == "A key pressed") {
-        setMotor(10, -speed/2.5);
-        setMotor(9, speed/2.5);
-      } 
-      if (incomingData == "D key pressed") {
-        setMotor(10, speed/2.5);
-        setMotor(9, -speed/2.5);
-      }
-      if (incomingData == "Shift key pressed") {
-        speed = 500;
-        Serial.println(speed);
-        setLed(0, 255, 0);
-        
-      }
-      if (incomingData == "Shift key released") {
-        speed = 250;
-        Serial.println(speed);
-        setLed(0, 0, 255);
-        
-      }
-      // else{ 
-      //   setMotor(9, 0);
-      //   setMotor(10, 0);    
-      // }
-    }
-  }
-  if (mode == 2) {
-    int right_line_value = digitalRead(16); // Read the value of the right line follower sensor.
-    int left_line_value = digitalRead(17);  // Read the value of the left line follower sensor.
-    // 0 is detecting black, 1 is detecting white
-    if (avg_dis <= 10) {
-      setMotor(10, 0);
-      setMotor(9, 0);
-    }
-    if (right_speed == 0) {
-      right_speed = default_speed;
-      Serial.println("Setting default speed for right motor");
-    }
-    if (left_speed == 0) {
-      left_speed = default_speed;
-      Serial.println("Setting default speed for left motor");
-    }
-    if (default_speed > 25) {
-      // if (default_speed == 100) {
-      //   setMotor(10, 100);
-      //   setMotor(9, 100);
-      //   default_speed = 50;
-      // }
-      Serial.println("Default Speed (" + String(default_speed) + ") is too high decreasing by 5");
-      default_speed = default_speed - 5;
-    }
-
-
-    if (right_line_value == 1 && left_line_value == 1) {
-      setMotor(10, right_speed);
-      setMotor(9, left_speed);
-    }
-    else if (right_line_value == 1 && left_line_value == 0) {
-      right_speed = right_speed / 2;
-      left_speed = default_speed;
-      setMotor(10, right_speed);
-      setMotor(9, left_speed); 
-    }
-    else if (right_line_value == 0 && left_line_value == 1) {
-      left_speed = left_speed / 2;
-      right_speed = default_speed;
-      setMotor(10, right_speed);
-      setMotor(9, left_speed); 
-    }
-    else {
-      setMotor(10, default_speed);
-      setMotor(9, default_speed); 
-    }
-  }
-  if (mode == 3) {
-    int SPEED = 1250;
-    int loop_amount = 10;
-    int loop_count = 0;
-    int i = 0;
-    int randomIndex = random(-1, 2);
-    int stuck = 0; 
-
-    for (i = 1; i <= loop_amount; i++) {
-      get_distance();
-      
-      if (avg_dis <= 30) {
-        stuck += 1;
-        Serial.println("Stuck: "+ String(stuck, 3));
-        setMotor(10, -100);
-        setMotor(9, -100);
-        if (stuck < 10) {
-          delay(250);
-        }
-        if (stuck >= 11) {
-          delay(500);
-        }
-
-        if (randomIndex == 0) {
-          Serial.println("Random: 0");
-          setMotor(10, -100);
-          setMotor(9, 100);
-        }
-        if (randomIndex == 1) {
-          Serial.println("Random: 1");
-          setMotor(10, 100);
-          setMotor(9, -100);
-        }
-        delay(250);
-        if (avg_dis >= 30) {
-          setMotor(10, 100);
-          setMotor(9, 100);
+    if (mode > 0) { // Make sure the mode is a valid number
+      if (mode == 1) {
+        // Check if there is incoming data on the serial
+        if (Serial.available()) {
+          // Read the incoming data as a string
+          String incomingData = Serial.readStringUntil('\n');
+          incomingData.trim(); // Remove any trailing whitespace
+          // Set speed based on shift input
+          
+          if (incomingData == "Shift key pressed") {
+            speed = 500;
+            setLed(0, 255, 0);
+          }
+          if (incomingData == "Shift key released") {
+            speed = 250;
+            setLed(0, 0, 255);
+          }
+          // Compare the incoming data
+          if (incomingData == "W key pressed") {
+            setMotor(10, speed);
+            setMotor(9, speed);
+          }
+          if (incomingData == "S key pressed") {
+            setMotor(10, -speed);
+            setMotor(9, -speed);
+          }
+          if (incomingData == "A key pressed") {
+            setMotor(10, -speed/2.5);
+            setMotor(9, speed/2.5);
+          } 
+          if (incomingData == "D key pressed") {
+            setMotor(10, speed/2.5);
+            setMotor(9, -speed/2.5);
+          }
+          if (incomingData == "Shift key pressed") {
+            speed = 500;
+            setLed(0, 255, 0);
+            
+          }
+          if (incomingData == "Shift key released") {
+            speed = 250;
+            setLed(0, 0, 255);
+            
+          }
+          // else{ 
+          //   setMotor(9, 0);
+          //   setMotor(10, 0);    
+          // }
         }
       }
+      if (mode == 2) {
+        int right_line_value = digitalRead(16); // Read the value of the right line follower sensor.
+        int left_line_value = digitalRead(17);  // Read the value of the left line follower sensor.
+        // 0 is detecting black, 1 is detecting white
+        if (avg_dis <= 10) {
+          setMotor(10, 0);
+          setMotor(9, 0);
+        }
+        if (right_speed == 0) {
+          right_speed = default_speed;
+        }
+        if (left_speed == 0) {
+          left_speed = default_speed;
+        }
+        if (default_speed > 25) {
+          // if (default_speed == 100) {
+          //   setMotor(10, 100);
+          //   setMotor(9, 100);
+          //   default_speed = 50;
+          // }
+          default_speed = default_speed - 5;
+        }
 
-      else {
+
+        if (right_line_value == 1 && left_line_value == 1) {
+          setMotor(10, right_speed);
+          setMotor(9, left_speed);
+        }
+        else if (right_line_value == 1 && left_line_value == 0) {
+          right_speed = right_speed / 2;
+          left_speed = default_speed;
+          setMotor(10, right_speed);
+          setMotor(9, left_speed); 
+        }
+        else if (right_line_value == 0 && left_line_value == 1) {
+          left_speed = left_speed / 2;
+          right_speed = default_speed;
+          setMotor(10, right_speed);
+          setMotor(9, left_speed); 
+        }
+        else {
+          setMotor(10, default_speed);
+          setMotor(9, default_speed); 
+        }
+      }
+      if (mode == 3) {
+        int SPEED = 1250;
+        int loop_amount = 10;
+        int loop_count = 0;
+        int i = 0;
+        int randomIndex = random(-1, 2);
+        int stuck = 0; 
+
+        for (i = 1; i <= loop_amount; i++) {
+          get_distance();
+          
+          if (avg_dis <= 30) {
+            stuck += 1;
+            setMotor(10, -100);
+            setMotor(9, -100);
+            if (stuck < 10) {
+              delay(250);
+            }
+            if (stuck >= 11) {
+              delay(500);
+            }
+
+            if (randomIndex == 0) {
+              setMotor(10, -100);
+              setMotor(9, 100);
+            }
+            if (randomIndex == 1) {
+              setMotor(10, 100);
+              setMotor(9, -100);
+            }
+            delay(250);
+            if (avg_dis >= 30) {
+              setMotor(10, 100);
+              setMotor(9, 100);
+            }
+          }
+
+          else {
+            setMotor(10, SPEED);
+            setMotor(9, SPEED);
+          }
+        }
+      }
+      if (mode == 4) {
+        int SPEED = 500;
+
         setMotor(10, SPEED);
-        setMotor(9, SPEED);
+        setMotor(9, SPEED/4);
       }
+    } 
+    else {
+      Serial.println("Invalid mode number.");
     }
-  }
-  if (mode == 4) {
-    int SPEED = 500;
-
-    setMotor(10, SPEED);
-    setMotor(9, SPEED/4);
   }
 }
 
@@ -300,11 +287,10 @@ void get_distance() {
   loop_count++;
   avg_dis = sum / loop_amount; // Calculate the average distance
 
-  print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.1, false);
+  // print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.1, false);
 
   if (loop_count = 10) {
-    Serial.println("Average distance: "+String(avg_dis, 3));
-    // Serial.println(avg_dis); // Print the average distance to the serial monitor
+    Serial.println("Distance: "+String(avg_dis, 3));
     loop_count = 0;
   }
   i = 0;
@@ -364,7 +350,7 @@ void print_to_lcd(String first_line, String second_line, int pause, bool clear) 
 
 void loop() {
 
-  move(3); //(1: Web Based, 2: Line Following, 3: Self Driving, 4: Circles ^^)
+  move(1); //(1: Web Based, 2: Line Following, 3: Self Driving, 4: Circles ^_^)
 
   // show_faces();
 
