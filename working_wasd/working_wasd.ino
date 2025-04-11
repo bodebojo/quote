@@ -1,4 +1,4 @@
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 
 const char* ssid = "CoachGroepTiuri";
 const char* password = "CoachGroepTiuri";
@@ -11,8 +11,10 @@ String header;
 String gpioState[2] = {"off", "off"}, keyState[5] = {"Released", "Released", "Released", "Released", "Released"};
 bool keyPressed[5] = {false, false, false, false, false}; // Tracks W, A, S, D, Shift keys
 bool sendExtraKey[5] = {false, false, false, false, false}; // Flags to send extra key press after another key is released
-const int gpios[2] = {26, 27}; // GPIO pin 26 and 27
+const int gpios[2] = {17 ,18}; // GPIO pin 26 and 27
 bool authenticated = false;
+String incomingData;
+String distnesValue = "No Data";
 
 void setup() {
   Serial.begin(9600);
@@ -32,11 +34,11 @@ void handleKey(int index, const String& state) {
     if (index == 0) {
       Serial.println("W key pressed");
     } else if (index == 1) {
-      Serial.println("X key pressed");  // Changed A to X
+      Serial.println("A key pressed");  // Changed A to X
     } else if (index == 2) {
-      Serial.println("Y key pressed");  // Changed S to Y
+      Serial.println("S key pressed");  // Changed S to Y
     } else if (index == 3) {
-      Serial.println("Z key pressed");  // Changed D to Z
+      Serial.println("D key pressed");  // Changed D to Z
     } else {
       Serial.println("Shift key pressed");
     }
@@ -55,11 +57,11 @@ void handleKey(int index, const String& state) {
     if (index == 0) {
       Serial.println("W key released");
     } else if (index == 1) {
-      Serial.println("X key released");  // Changed A to X
+      Serial.println("A key released");  // Changed A to X
     } else if (index == 2) {
-      Serial.println("Y key released");  // Changed S to Y
+      Serial.println("S key released");  // Changed S to Y
     } else if (index == 3) {
-      Serial.println("Z key released");  // Changed D to Z
+      Serial.println("D key released");  // Changed D to Z
     } else {
       Serial.println("Shift key released");
     }
@@ -68,9 +70,9 @@ void handleKey(int index, const String& state) {
     for (int i = 0; i < 5; i++) {
       if (sendExtraKey[i] && keyPressed[i]) {
         if (i == 0) Serial.println("W key pressed");
-        else if (i == 1) Serial.println("X key pressed");
-        else if (i == 2) Serial.println("Y key pressed");
-        else if (i == 3) Serial.println("Z key pressed");
+        else if (i == 1) Serial.println("A key pressed");
+        else if (i == 2) Serial.println("S key pressed");
+        else if (i == 3) Serial.println("D key pressed");
         else Serial.println("Shift key pressed");
 
         sendExtraKey[i] = false; // Reset the flag
@@ -86,6 +88,7 @@ void handleGPIO(int index, bool on) {
 }
 
 void loop() {
+
   WiFiClient client = server.available();
   if (!client) return;
   
@@ -153,11 +156,11 @@ void loop() {
         // WASD and Shift key states
         client.printf("<p>W Key: %s</p><p>X Key: %s</p><p>Y Key: %s</p><p>Z Key: %s</p><p>Shift Key: %s</p>", 
                       keyState[0].c_str(), keyState[1].c_str(), keyState[2].c_str(), keyState[3].c_str(), keyState[4].c_str());
-
+        client.printf("<p>Average Distance: <span id=\"distance\">%s</span> cm</p>", distnesValue.c_str());
         // JavaScript to handle WASD and Shift key presses
-        client.println("<script>let keys={w:false,a:false,s:false,d:false,shift:false};['w','a','s','d','shift'].forEach(k=>{document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==k&&!keys[k]){fetch('/'+k+'/press').catch(console.error);keys[k]=true}});document.addEventListener('keyup',e=>{if(e.key.toLowerCase()==k){fetch('/'+k+'/release').catch(console.error);keys[k]=false}})});</script>");
+        client.println("<script>let keys={w:false,a:false,s:false,d:false,shift:false};['w','a','s','d','shift'].forEach(k=>{document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==k&&!keys[k]){fetch('/'+k+'/press').catch(console.error);keys[k]=true}});document.addEventListener('keyup',e=>{if(e.key.toLowerCase()==k){fetch('/'+k+'/release').catch(console.error);keys[k]=false}})});");
+        client.println("setInterval(()=>{fetch('/distance').then(res=>res.text()).then(data=>{document.getElementById('distance').textContent=data})},1000);</script>");
         client.println("</body></html>");
-        
         client.stop();
         header = "";
       }
