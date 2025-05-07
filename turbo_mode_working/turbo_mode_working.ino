@@ -15,6 +15,9 @@ int right_speed = 0;
 int left_speed = 0;
 int default_speed = 100;
 double avg_dis;  // Declaration of variable 'avg_dis' to store the average
+double light_left;
+double light_right;
+String incomingData;
 
 byte block[8] = {
   0b11111,
@@ -113,9 +116,15 @@ void setup() {
   }
 }
 
+void read_serial_data() {
+  if (Serial.available()) {
+    incomingData = Serial.readStringUntil('\n');
+    incomingData.trim();
+    // Serial.println("IncomingData: " + incomingData);
+  }
+}
+
 void move(int mode) {
-  String incomingData = Serial.readStringUntil('\n');
-  incomingData.trim();
 
   if (incomingData.startsWith("Change Driving Mode: ")) {
     String modeNumberString = incomingData.substring(3); // Get the number part
@@ -123,53 +132,46 @@ void move(int mode) {
 
     if (mode > 0) { // Make sure the mode is a valid number
       if (mode == 1) {
-        // Check if there is incoming data on the serial
-        if (Serial.available()) {
-          // Read the incoming data as a string
-          String incomingData = Serial.readStringUntil('\n');
-          incomingData.trim(); // Remove any trailing whitespace
-          // Set speed based on shift input
-          
-          if (incomingData == "Shift key pressed") {
-            speed = 500;
-            setLed(0, 255, 0);
-          }
-          if (incomingData == "Shift key released") {
-            speed = 250;
-            setLed(0, 0, 255);
-          }
-          // Compare the incoming data
-          if (incomingData == "W key pressed") {
-            setMotor(10, speed);
-            setMotor(9, speed);
-          }
-          if (incomingData == "S key pressed") {
-            setMotor(10, -speed);
-            setMotor(9, -speed);
-          }
-          if (incomingData == "A key pressed") {
-            setMotor(10, -speed/2.5);
-            setMotor(9, speed/2.5);
-          } 
-          if (incomingData == "D key pressed") {
-            setMotor(10, speed/2.5);
-            setMotor(9, -speed/2.5);
-          }
-          if (incomingData == "Shift key pressed") {
-            speed = 500;
-            setLed(0, 255, 0);
-            
-          }
-          if (incomingData == "Shift key released") {
-            speed = 250;
-            setLed(0, 0, 255);
-            
-          }
-          // else{ 
-          //   setMotor(9, 0);
-          //   setMotor(10, 0);    
-          // }
+        // Set speed based on shift input
+        if (incomingData == "Shift key pressed") {
+          speed = 500;
+          setLed(0, 255, 0);
         }
+        if (incomingData == "Shift key released") {
+          speed = 250;
+          setLed(0, 0, 255);
+        }
+        // Compare the incoming data
+        if (incomingData == "w key pressed") {
+          setMotor(10, speed);
+          setMotor(9, speed);
+        }
+        if (incomingData == "s key pressed") {
+          setMotor(10, -speed);
+          setMotor(9, -speed);
+        }
+        if (incomingData == "a key pressed") {
+          setMotor(10, -speed/2.5);
+          setMotor(9, speed/2.5);
+        } 
+        if (incomingData == "d key pressed") {
+          setMotor(10, speed/2.5);
+          setMotor(9, -speed/2.5);
+        }
+        if (incomingData == "Shift key pressed") {
+          speed = 500;
+          setLed(0, 255, 0);
+          
+        }
+        if (incomingData == "Shift key released") {
+          speed = 250;
+          setLed(0, 0, 255);
+          
+        }
+        // else{ 
+        //   setMotor(9, 0);
+        //   setMotor(10, 0);    
+        // }
       }
       if (mode == 2) {
         int right_line_value = digitalRead(16); // Read the value of the right line follower sensor.
@@ -225,7 +227,6 @@ void move(int mode) {
         int stuck = 0; 
 
         for (i = 1; i <= loop_amount; i++) {
-          get_distance();
           
           if (avg_dis <= 30) {
             stuck += 1;
@@ -265,13 +266,14 @@ void move(int mode) {
         setMotor(10, SPEED);
         setMotor(9, SPEED/4);
       }
-    } 
+    }
+
     else {
       Serial.println("Invalid mode number.");
+      Serial.println(mode);
     }
   }
 }
-
 void get_distance() {
   // Loop to read loop_amount numbers
   int loop_amount = 10;
@@ -283,11 +285,13 @@ void get_distance() {
     n = constrain(n, (prev_n-50), (prev_n+50)); // Limit the distance
     sum += n; // Add the distance to the sum
     prev_n = n; // Record the old distance in prev_n
+
+    delay(100 / loop_amount);
   }
   loop_count++;
   avg_dis = sum / loop_amount; // Calculate the average distance
 
-  // print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.1, false);
+  print_to_lcd("AVG Distance:", String(avg_dis, 3), 0.1, false);
 
   if (loop_count = 10) {
     Serial.println("Distance: "+String(avg_dis, 3));
@@ -297,41 +301,11 @@ void get_distance() {
   sum = 0;
 }
 
-String pickRandomString(String stringList[], int listSize) {
-  int randomIndex = random(listSize);
-  return stringList[randomIndex];
-}
-
-void show_faces() {
-  // lcd.autoscroll();
-  // String faces[] = {">:3", ":0", ":p", ":D", ">:D"};
-  // int randomIndex0 = random(0, 5);
-  // String randomFace0 = faces[randomIndex0];
-  // int randomIndex1 = random(0, 5);
-  // String randomFace1 = faces[randomIndex1];
-  // String information = "The quick brown fox jumps over the lazy"; // 40 chars per line limit
-
-  String empty_string = "                ";
-
-  String eye[] = {"O", "#", "$", "*", "V", "-", "|", "Z"};
-  String eyes[] =   {"  O          0  ", "  -          O  ", "  V          V  ", "  |          |  ", "  -          -  ", "  #          #  ", "  $          $  "};
-  String mouths[] = {"       ==       ", "       ()       ", "       []       ", "       vv       ", "       ##       "};
-  
-  int eye_list_size = sizeof(eye) / sizeof(eye[0]);
-  int eyes_list_size = sizeof(eyes) / sizeof(eyes[0]);
-  int mouths_list_size = sizeof(mouths) / sizeof(mouths[0]);
-
-  String random_eye1 = pickRandomString(eyes, eyes_list_size);
-  String random_eye2 = pickRandomString(eyes, eyes_list_size);
-
-  // String random_eyes = pickRandomString(eyes, eyes_list_size);
-
-  String random_mouth = pickRandomString(mouths, mouths_list_size);
-
-  String double_eyes = ""+random_eye1+"          "+random_eye2+" ";
-
-  print_to_lcd(double_eyes, random_mouth, 2, true);
-
+void get_light_info() {
+  light_left =  analogRead(0);
+  light_right = analogRead(1);
+  Serial.println("Light Left: "+String(light_left, 3));
+  Serial.println("Light Right: "+String(light_right, 3));
 }
 
 void print_to_lcd(String first_line, String second_line, int pause, bool clear) {
@@ -350,9 +324,10 @@ void print_to_lcd(String first_line, String second_line, int pause, bool clear) 
 
 void loop() {
 
-  move(1); //(1: Web Based, 2: Line Following, 3: Self Driving, 4: Circles ^_^)
-
-  // show_faces();
+  read_serial_data();
+  get_distance();
+  get_light_info();
+  move(1); //(1: Web Based, 2: Line Following, 3: Self Driving, 4: Circles)
 
   avg_dis = 0;
 }
