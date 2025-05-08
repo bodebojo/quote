@@ -120,7 +120,7 @@ void read_serial_data() {
   if (Serial.available()) {
     incomingData = Serial.readStringUntil('\n');
     incomingData.trim();
-    // Serial.println("IncomingData: " + incomingData);
+    // Serial.println("IncomingData: " + String(incomingData));
   }
 }
 
@@ -269,8 +269,8 @@ void move(int mode) {
     }
 
     else {
-      Serial.println("Invalid mode number.");
-      Serial.println(mode);
+      // Serial.println("Invalid mode number.");
+      // Serial.println(mode);
     }
   }
 }
@@ -304,8 +304,8 @@ void get_distance() {
 void get_light_info() {
   light_left =  analogRead(0);
   light_right = analogRead(1);
-  Serial.println("Light Left: "+String(light_left, 3));
-  Serial.println("Light Right: "+String(light_right, 3));
+  // Serial.println("Light Left: "+String(light_left, 3));
+  // Serial.println("Light Right: "+String(light_right, 3));
 }
 
 void print_to_lcd(String first_line, String second_line, int pause, bool clear) {
