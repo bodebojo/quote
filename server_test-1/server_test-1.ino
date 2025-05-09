@@ -68,6 +68,10 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     } else if (message.startsWith("KeyUp:")) {
       String key = message.substring(6);
       Serial.println("Key Up: " + key);
+    } else if (message.startsWith("Button = Change Driving Mode:")) {
+      String mode = message.substring(String("Button = Change Driving Mode:").length());
+      Serial.println("Mode:" + mode);
+     // Optionally send this to another serial device
     } else {
       Serial.println("Received unknown message: " + message);
     }
@@ -80,12 +84,20 @@ void readSerial() {
     String data = Serial.readStringUntil('\n'); // Read a line
     data.trim(); // Remove whitespace
 
-    if (data.startsWith("distance:")) {
-      distance = data.substring(String("distance:").length());
-      distance.trim();
-      Serial.println("Updated Distance: " + distance);
+      if (data.startsWith("Distance:")) {
+        distance = data.substring(String("distance:").length());
+        distance.trim();
+        Serial.println("Updated Distance: " + distance);
 
-      webSocket.textAll("distance:" + distance); //send distance tho websocket 
+        webSocket.textAll("distance:" + distance); //send distance tho websocket 
+    } else if (data.startsWith("Light Left:")) {
+        String left = data.substring(String("Light Left:").length());
+        left.trim();
+        webSocket.textAll("Light Left:" + left);
+    } else if (data.startsWith("Light Right:")) {
+        String right = data.substring(String("Light Right:").length());
+        right.trim();
+        webSocket.textAll("Light Right:" + right);
     }
   }
 }

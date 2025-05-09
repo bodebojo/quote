@@ -4,103 +4,188 @@
 // HTML page to be served to the client, stored in flash memory (PROGMEM)
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>ESP32 Camera and Distance</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESP32 Dashboard</title>
   <style>
-    /* Basic styling for page layout */
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
-    #videoFeed { width: 640px; height: 480px; border: 1px solid #ccc; }  /* Camera feed container */
-    #distance { font-size: 20px; font-weight: bold; }  /* Distance display style */
-    #status { font-size: 16px; color: red; }  /* WebSocket connection status */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef8ee;
+      color: #333;
+    }
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+    .menu-toggle {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .tabs {
+      display: flex;
+      flex-direction: column;
+    }
+    .tab-content {
+      display: none;
+      padding: 1rem;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    #videoFeed {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      display: block;
+    }
+    #videoFeedCam {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      display: block;
+    }
+    .sensor-boxes h3 {
+      margin: 0.5rem 0;
+    }
+    .status {
+      font-weight: bold;
+      color: green;
+    }
+    .driving-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .driving-buttons button {
+      background: linear-gradient(to right, #43e97b, #38f9d7);
+      border: none;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .driving-buttons button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+    @media (max-width: 600px) {
+      header .menu-toggle { display: block; }
+      nav { display: none; flex-direction: column; background: #4CAF50; padding: 1rem; }
+      nav.active { display: flex; }
+      .driving-buttons { flex-direction: column; }
+      .driving-buttons button { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <!-- Header with title -->
-  <h1>ESP32 Camera Live Feed</h1>
-  <!-- MJPEG stream dynamically loaded from ESP32 camera -->
-  <img id="videoFeed" src="http://" alt="Camera Stream" />
-  
-  <h2>Key Detection</h2>
-  <p>Press any key to send a message to the ESP32</p>
-  
-  <!-- Distance display -->
-  <h3>Distance: <span id="distance">0</span></h3>
-   
-  <!-- WebSocket status display -->
-  <p id="status">Connecting to WebSocket...</p>
+  <header>
+    <h1>ESP32 Dashboard</h1>
+    <span class="menu-toggle" onclick="toggleMenu()">&#9776;</span>
+    <nav id="menu">
+      <a href="#" onclick="showTab('home')">Home</a>
+      <a href="#" onclick="showTab('camera')">Camera</a>
+      <a href="#" onclick="showTab('sensors')">Sensors</a>
+      <button onclick="gotoDatabase()" style="background:none;border:none;color:white;font-weight:bold;cursor:pointer;">Database</button>
+    </nav>
+  </header>
 
-<script>
-  // Dynamically set MJPEG feed URL to the ESP32's IP address (port 82 for MJPEG stream)
-  document.getElementById('videoFeed').src = 'http://' + window.location.hostname + ':82/mjpeg';
+  <div class="tabs">
+    <div id="home" class="tab-content active">
+      <img id="videoFeed" src="" alt="Camera Stream" />
+      <h2>Driving Mode</h2>
+      <div class="driving-buttons">
+        <button onclick="sendDrivingMode(1)">Mode 1</button>
+        <button onclick="sendDrivingMode(2)">Mode 2</button>
+        <button onclick="sendDrivingMode(3)">Mode 3</button>
+        <button onclick="sendDrivingMode(4)">Mode 4</button>
+      </div>
+      <div class="sensor-boxes">
+        <h3>Distance: <span id="distance">0</span> cm</h3>
+        <h3>Light Left: <span id="light_left">0</span></h3>
+        <h3>Light Right: <span id="light_right">0</span></h3>
+        <p class="status" id="status">Connecting to WebSocket...</p>
+      </div>
+    </div>
+    <div id="camera" class="tab-content">
+      <img id="videoFeedCam" src="" alt="Camera Stream" />
+    </div>
+    <div id="sensors" class="tab-content">
+      <h2>Driving Mode</h2>
+      <div class="driving-buttons">
+        <button onclick="sendDrivingMode(1)">Mode 1</button>
+        <button onclick="sendDrivingMode(2)">Mode 2</button>
+        <button onclick="sendDrivingMode(3)">Mode 3</button>
+        <button onclick="sendDrivingMode(4)">Mode 4</button>
+      </div>
+      <div class="sensor-boxes">
+        <h3>Distance: <span id="distance2">0</span> cm</h3>
+        <h3>Light Left: <span id="light_left2">0</span></h3>
+        <h3>Light Right: <span id="light_right2">0</span></h3>
+        <p class="status" id="status2">Connecting to WebSocket...</p>
+      </div>
+    </div>
+  </div>
 
-  var ws;
-
-  // WebSocket connection to communicate with ESP32
-  function connectWebSocket() {
-    // Establish WebSocket connection to the ESP32
-    ws = new WebSocket('ws://' + window.location.hostname + '/ws');
-    
-    // WebSocket open event - When the connection is successfully established
-    ws.onopen = function() {
-      console.log("WebSocket connected");
-      // Update the status to show connected
-      document.getElementById('status').textContent = "WebSocket Connected!";
-      document.getElementById('status').style.color = 'green';
-    };
-
-    // WebSocket message event - When a message is received from ESP32
-    ws.onmessage = function(event) {
-      if (event.data.startsWith("distance:")) {
-        var value = event.data.split(":")[1];  // Extract the distance value
-        console.log("Distance received:", value);  // Debugging message
-        document.getElementById('distance').textContent = value; 
-      }
-    };
-
-    // WebSocket close event - When the connection is closed
-    ws.onclose = function() {
-      console.log("WebSocket disconnected, trying to reconnect...");
-      // Update the status to show WebSocket is disconnected
-      document.getElementById('status').textContent = "WebSocket Disconnected. Retrying...";
-      document.getElementById('status').style.color = 'red';
-      // Retry the connection after 2 seconds
-      setTimeout(connectWebSocket, 2000);
-    };
-
-    // WebSocket error event - If there’s an error, attempt to close the connection and reconnect
-    ws.onerror = function(err) {
-      console.error("WebSocket error:", err);
-      ws.close(); // Close WebSocket to trigger reconnect
-    };
-  }
-
-  // Start WebSocket connection when page loads
-  connectWebSocket();
-
-  // Handle key press events (send data on key down and key up)
-  const keysDown = new Set();
-
-  // Key down event - send a message when a key is pressed
-  document.addEventListener('keydown', function(event) {
-    if (!keysDown.has(event.key) && ws.readyState === WebSocket.OPEN) {
-      keysDown.add(event.key); // Mark key as pressed
-      ws.send("KeyDown:" + event.key); // Send key press event to ESP32
+  <script>
+    window.onload = () => { document.body.tabIndex = 0; document.body.focus(); };
+    function toggleMenu() { document.getElementById('menu').classList.toggle('active'); }
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     }
-  });
-
-  // Key up event - send a message when a key is released
-  document.addEventListener('keyup', function(event) {
-    if (keysDown.has(event.key) && ws.readyState === WebSocket.OPEN) {
-      keysDown.delete(event.key); // Mark key as released
-      ws.send("KeyUp:" + event.key); // Send key release event to ESP32
+    function gotoDatabase() {
+      // Remove ESP dashboard content and navigate
+      document.body.innerHTML = '';
+      window.location.replace('http://10.42.0.1:81');
     }
-  });
-</script>
+    function loadMJPEG() {
+      const src = 'http://' + location.hostname + ':82/mjpeg';
+      document.getElementById('videoFeed').src = src;
+      document.getElementById('videoFeedCam').src = src;
+    }
+    loadMJPEG();
+    document.getElementById('videoFeedCam').addEventListener('error', () => setTimeout(loadMJPEG,2000));
 
+    const ws = new WebSocket('ws://' + location.hostname + '/ws');
+    const keysDown = new Set();
+    ws.onopen = () => {
+      ['status','status2'].forEach(id => { const el = document.getElementById(id); el.textContent='WS Connected'; el.style.color='green'; });
+    };
+    ws.onmessage = evt => {
+      const d = evt.data;
+      if (d.startsWith('Distance:')) update('distance','distance2',d);
+      if (d.startsWith('Light Left:')) update('light_left','light_left2',d);
+      if (d.startsWith('Light Right:')) update('light_right','light_right2',d);
+    };
+    ws.onclose = () => setTimeout(() => location.reload(),2000);
+    function update(id1,id2,msg) { const val = msg.split(':')[1]; document.getElementById(id1).textContent=val; document.getElementById(id2).textContent=val; }
+    function sendDrivingMode(m) { if (ws.readyState === 1) ws.send('Button = Change Driving Mode: '+m); }
+    document.addEventListener('keydown', e => { if (!keysDown.has(e.key)) { keysDown.add(e.key); if(ws.readyState===1) ws.send('KeyDown:'+e.key); } });
+    document.addEventListener('keyup', e => { if (keysDown.has(e.key)) { keysDown.delete(e.key); if(ws.readyState===1) ws.send('KeyUp:'+e.key); } });
+  </script>
 </body>
 </html>
+
 )rawliteral";
 
 #endif
