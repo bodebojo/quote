@@ -26,6 +26,7 @@ double avg_dis;  // Declaration of variable 'avg_dis' to store the average
 double light_left;
 double light_right;
 String incomingData;
+int modeInt;
 
 void setup(){
   Serial.begin(115200); // Initialize serial communication with the computer
@@ -56,11 +57,10 @@ void handlemode() {
     mode = incomingData.substring(String("Mode:").length());
     mode.trim();  // Removes any extra whitespace
 
-    int modeInt = mode.toInt();  // Convert string to integer
-
-    if (modeInt == 1) { 
+    modeInt = mode.toInt();  // Convert string to integer
+   } if (modeInt == 1) { 
       mode1();
-      Serial.println("mode1 selected");
+      // Serial.println("mode1 selected");
     } else if (modeInt == 2) {
       mode2();
     } else if (modeInt == 3) {
@@ -69,7 +69,6 @@ void handlemode() {
       mode4();
     } else {
       Serial.println("invalid driving mode detected");
-    }
   }
 }
 
