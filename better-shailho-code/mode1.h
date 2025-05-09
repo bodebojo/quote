@@ -18,51 +18,51 @@ void mode1(){
       setLed(0, 0, 255);
     } 
     if (incomingData == "Key Down: w") {
-    left_speed =+ speed;
-    right_speed =+ speed;
+    left_speed += speed;
+    right_speed += speed;
       Serial.println("W Key Down");
     } 
     if (incomingData == "Key Down: s") {
-    left_speed =- speed;
-    right_speed =- speed;
+    left_speed -= speed;
+    right_speed -= speed;
       Serial.println("S Key Down");
     } 
     if (incomingData == "Key Down: a") {
-    left_speed =- speed;
-    right_speed =+ speed;
+    left_speed -= speed;
+    right_speed += speed;
       Serial.println("A Key Down");
     } 
     if (incomingData == "Key Down: d") {
-    left_speed =+ speed;
-    right_speed =- speed;
+    left_speed += speed;
+    right_speed -= speed;
       Serial.println("D Key Down Detected");
     }
     if (incomingData == "Key Up: w") {
-    left_speed =- speed;
-    right_speed =- speed;
+    left_speed -= speed;
+    right_speed -= speed;
       Serial.println("W Key Up");
     } 
     if (incomingData == "Key Up: s") {
-    left_speed =+ speed;
-    right_speed =+ speed;
+    left_speed += speed;
+    right_speed += speed;
       Serial.println("S Key Up");
     } 
     if (incomingData == "Key Up: a") {
-    left_speed =+ speed;
-    right_speed =- speed;
+    left_speed += speed;
+    right_speed -= speed;
       Serial.println("A Key Up");
     } 
     if (incomingData == "Key Up: d") {
-    left_speed =- speed;
-    right_speed =+ speed;
+    left_speed -= speed;
+    right_speed += speed;
       Serial.println("D Key Up");
     }
-    setMotor(9, left_speed);
-    setMotor(10, right_speed);
-    //else{ 
-    //    setMotor(9, 0);
-    //    setMotor(10, 0);    
-    //}
+    // else{ 
+    //   left_speed = 0;
+    //   right_speed = 0;
+    // }
+    setMotor(10, left_speed);
+    setMotor(9, right_speed);
 }
 
 #endif
