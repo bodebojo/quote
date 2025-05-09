@@ -35,7 +35,7 @@ void mode1(){
     if (incomingData == "Key Down: d") {
     left_speed =+ speed;
     right_speed =- speed;
-      Serial.println("D Key Down");
+      Serial.println("D Key Down Detected");
     }
     if (incomingData == "Key Up: w") {
     left_speed =- speed;
@@ -57,6 +57,8 @@ void mode1(){
     right_speed =+ speed;
       Serial.println("D Key Up");
     }
+    setMotor(9, left_speed);
+    setMotor(10, right_speed);
     //else{ 
     //    setMotor(9, 0);
     //    setMotor(10, 0);    
