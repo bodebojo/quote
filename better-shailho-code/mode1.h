@@ -13,16 +13,16 @@ void mode1(){
   } if (incomingData == "Shift key released") {
       speed = 250;
       setLed(0, 0, 255);
-  } if (incomingData == "w key pressed") {
+  } if (incomingData == "key Down: w") {
       setMotor(10, speed);
       setMotor(9, speed);
-  } if (incomingData == "s key pressed") {
+  } if (incomingData == "key Down: s") {
       setMotor(10, -speed);
       setMotor(9, -speed);
-  } if (incomingData == "a key pressed") {
+  } if (incomingData == "key Down: a") {
       setMotor(10, -speed/2.5);
       setMotor(9, speed/2.5);
-  } if (incomingData == "d key pressed") {
+  } if (incomingData == "key Down: d") {
       setMotor(10, speed/2.5);
       setMotor(9, -speed/2.5);
   } if (incomingData == "Shift key pressed") {

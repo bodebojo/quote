@@ -17,6 +17,7 @@ LiquidCrystal_I2C lcd(0x3F,20,4);
 //config
 bool do_boot = false;
 //varibalesa
+String mode;
 int right_speed = 0;
 int left_speed = 0;
 int default_speed = 100;
@@ -37,7 +38,7 @@ void loop(){
 readSerial();
 get_distance();
 get_light_info();
-mode();
+handlemode();
 
 avg_dis = 0;
 }
@@ -49,24 +50,29 @@ void readSerial() {
     Serial.println("IncomingData: " + String(incomingData));
   }
 }
-void mode(){
- if (incomingData.startsWith("Change Driving Mode: ")) {
-    String modeNumberString = incomingData.substring(3); // Get the number part
-    int mode = modeNumberString.toInt(); // Convert the number part to an integer
-    if (mode == 1) { 
+
+void handlemode() {
+  if (incomingData.startsWith("Mode:")) {
+    mode = incomingData.substring(String("Mode:").length());
+    mode.trim();  // Removes any extra whitespace
+
+    int modeInt = mode.toInt();  // Convert string to integer
+
+    if (modeInt == 1) { 
       mode1();
       Serial.println("mode1 selected");
-   } if (mode == 2) {
+    } else if (modeInt == 2) {
       mode2();
-   } if (mode == 3) {
+    } else if (modeInt == 3) {
       mode3();
-   } if (mode == 4) {
+    } else if (modeInt == 4) {
       mode4();
-   } else {
+    } else {
       Serial.println("invalid driving mode detected");
-   }
- }
+    }
+  }
 }
+
 
 void print_to_lcd(String text, String value, float delay_time, bool clear_screen) {
   float pause_ms = delay_time * 1000;
