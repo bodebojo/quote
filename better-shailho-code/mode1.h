@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #ifndef MODE1_H
 #define MODE1_H
 
@@ -6,63 +5,58 @@ extern String incomingData;
 extern int speed;
 extern int left_speed;
 extern int right_speed;
+extern void setMotor(int motor, int speed);
 
-void mode1(){
-// Set speed based on shift input
-    if (incomingData == "Key Down: Shift") {
-      speed = 500;
-      setLed(0, 255, 0);
-    } 
-    if (incomingData == "Key Up: Shift") {
-      speed = 250;
-      setLed(0, 0, 255);
-    } 
-    if (incomingData == "Key Down: w") {
-    left_speed += speed;
-    right_speed += speed;
-      Serial.println("W Key Down");
-    } 
-    if (incomingData == "Key Down: s") {
-    left_speed -= speed;
-    right_speed -= speed;
-      Serial.println("S Key Down");
-    } 
-    if (incomingData == "Key Down: a") {
-    left_speed -= speed;
-    right_speed += speed;
-      Serial.println("A Key Down");
-    } 
-    if (incomingData == "Key Down: d") {
-    left_speed += speed;
-    right_speed -= speed;
-      Serial.println("D Key Down Detected");
+// Key states
+bool wPressed = false;
+bool aPressed = false;
+bool sPressed = false;
+bool dPressed = false;
+bool shiftPressed = false;
+
+void mode1() {
+    // Update key states based on incomingData
+    if (incomingData == "Key Down: Shift") shiftPressed = true;
+    else if (incomingData == "Key Up: Shift") shiftPressed = false;
+    else if (incomingData == "Key Down: w") wPressed = true;
+    else if (incomingData == "Key Up: w") wPressed = false;
+    else if (incomingData == "Key Down: s") sPressed = true;
+    else if (incomingData == "Key Up: s") sPressed = false;
+    else if (incomingData == "Key Down: a") aPressed = true;
+    else if (incomingData == "Key Up: a") aPressed = false;
+    else if (incomingData == "Key Down: d") dPressed = true;
+    else if (incomingData == "Key Up: d") dPressed = false;
+
+    // Set speed based on shift
+    speed = shiftPressed ? 500 : 250;
+
+    // Reset motor speeds
+    left_speed = 0;
+    right_speed = 0;
+
+    // Forward / Backward logic
+    if (wPressed) {
+        left_speed = speed;
+        right_speed = speed;
+    } else if (sPressed) {
+        left_speed = -speed;
+        right_speed = -speed;
     }
-    if (incomingData == "Key Up: w") {
-    left_speed -= speed;
-    right_speed -= speed;
-      Serial.println("W Key Up");
-    } 
-    if (incomingData == "Key Up: s") {
-    left_speed += speed;
-    right_speed += speed;
-      Serial.println("S Key Up");
-    } 
-    if (incomingData == "Key Up: a") {
-    left_speed += speed;
-    right_speed -= speed;
-      Serial.println("A Key Up");
-    } 
-    if (incomingData == "Key Up: d") {
-    left_speed -= speed;
-    right_speed += speed;
-      Serial.println("D Key Up");
+
+    // Turning adjustments
+    if (aPressed) {
+        left_speed -= speed / 2;
+        right_speed += speed / 2;
+    } else if (dPressed) {
+        left_speed += speed / 2;
+        right_speed -= speed / 2;
     }
-    // else{ 
-    //   left_speed = 0;
-    //   right_speed = 0;
-    // }
+
     setMotor(10, left_speed);
     setMotor(9, right_speed);
+
+    // Clear incomingData after processing
+    incomingData = "";
 }
 
 #endif
