@@ -27,14 +27,15 @@ void mode1() {
     else if (incomingData == "Key Down: d") dPressed = true;
     else if (incomingData == "Key Up: d") dPressed = false;
 
-    // Set speed based on shift
-    speed = shiftPressed ? 500 : 250;
+    // Set base speed
+    speed = shiftPressed ? 250 : 500;
+    int turnOffset = speed / 3;
 
-    // Reset motor speeds
+    // Default motor speeds
     left_speed = 0;
     right_speed = 0;
 
-    // Forward / Backward logic
+    // Forward/Backward
     if (wPressed) {
         left_speed = speed;
         right_speed = speed;
@@ -43,19 +44,22 @@ void mode1() {
         right_speed = -speed;
     }
 
-    // Turning adjustments
+    // Turning adjustments (only if moving)
     if (aPressed) {
-        left_speed -= speed / 2;
-        right_speed += speed / 2;
+        left_speed -= turnOffset;
+        right_speed += turnOffset;
     } else if (dPressed) {
-        left_speed += speed / 2;
-        right_speed -= speed / 2;
+        left_speed += turnOffset;
+        right_speed -= turnOffset;
     }
+
+    // Clamp motor speeds to valid range
+    left_speed = constrain(left_speed, -1023, 1023);
+    right_speed = constrain(right_speed, -1023, 1023);
 
     setMotor(10, left_speed);
     setMotor(9, right_speed);
 
-    // Clear incomingData after processing
     incomingData = "";
 }
 

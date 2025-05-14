@@ -41,7 +41,7 @@ void get_distance() {
 void get_light_info() {
   unsigned long currentMillis = millis();
   light_left = analogRead(A0);
-  light_right = analogRead(A1);
+  light_right = analogRead(A4);
 
   if (currentMillis - previousMillis_light >= interval) {
     previousMillis_light = currentMillis;

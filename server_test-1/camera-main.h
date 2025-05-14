@@ -4,6 +4,9 @@
 #include "esp_camera.h"       // ESP32 camera library
 #include "camera_pins.h"      // Custom pin definitions for your camera module
 #include <WiFi.h>             // For using WiFi and WiFiServer
+extern bool cameraEnabled;
+extern bool cameraFlip;
+
 
 // Function declarations so other files can use these
 bool initCamera();                       // Initializes the camera hardware
@@ -48,6 +51,10 @@ bool initCamera() {
     return false;
   }
 
+  if (cameraFlip) {
+    sensor_t * s = esp_camera_sensor_get();
+      s->set_vflip(s, 1);    // Flip vertically (1 = on, 0 = off)
+  }
   Serial.println("Camera init success");
   return true;
 }
@@ -69,6 +76,7 @@ void startCameraTask() {
 
 // Task function that continuously streams MJPEG frames to connected clients
 void streamCameraMJPEG(void *parameter) {
+  if (cameraEnabled) {
   mjpegStreamServer.begin();  // Start the MJPEG HTTP server
   Serial.println("MJPEG Stream Task started on Core: " + String(xPortGetCoreID()));
 
@@ -84,22 +92,24 @@ void streamCameraMJPEG(void *parameter) {
       client.println();
 
       // Keep streaming while client is connected
-      while (client.connected()) {
-        camera_fb_t *fb = esp_camera_fb_get(); // Capture frame
-
+      unsigned long lastFrameTime = millis();
+      while (client.connected() && millis() - lastFrameTime < 5000) {  // 5s timeout
+        camera_fb_t *fb = esp_camera_fb_get();
         if (!fb) {
           Serial.println("Camera capture failed");
+          delay(100);  // Prevent tight error loop
           continue;
         }
 
-        // Send frame with headers
         client.printf("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", fb->len);
-        client.write(fb->buf, fb->len); // Write image data
+        client.write(fb->buf, fb->len);
         client.println();
-        esp_camera_fb_return(fb);       // Return the frame buffer
+        esp_camera_fb_return(fb);
 
-        delay(33); // ~30 frames per second
+        lastFrameTime = millis();
+        delay(33);  // 30 FPS cap
       }
+
 
       client.stop(); // Client disconnected
       Serial.println("MJPEG client disconnected");
@@ -107,4 +117,6 @@ void streamCameraMJPEG(void *parameter) {
 
     vTaskDelay(10 / portTICK_PERIOD_MS); // Short delay to prevent watchdog triggers
   }
+}
+
 }

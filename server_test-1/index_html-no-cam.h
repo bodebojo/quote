@@ -1,14 +1,14 @@
-#ifndef INDEX_HTML_H
-#define INDEX_HTML_H
+#ifndef INDEX_HTML_NO_CAM_H
+#define INDEX_HTML_NO_CAM_H
 
-// HTML page to be served to the client, stored in flash memory (PROGMEM)
-const char index_html[] PROGMEM = R"rawliteral(
+// HTML page to be served to the client without the camera section, stored in flash memory (PROGMEM)
+const char index_html_no_cam[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ESP32 Dashboard</title>
+  <title>ESP32 Dashboard - No Camera</title>
   <style>
     body {
       margin: 0;
@@ -46,18 +46,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       padding: 1rem;
     }
     .tab-content.active {
-      display: block;
-    }
-    #videoFeed {
-      width: 100%;
-      max-height: 300px;
-      object-fit: contain;
-      display: block;
-    }
-    #videoFeedCam {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
       display: block;
     }
     .sensor-boxes h3 {
@@ -103,7 +91,6 @@ const char index_html[] PROGMEM = R"rawliteral(
     <span class="menu-toggle" onclick="toggleMenu()">&#9776;</span>
     <nav id="menu">
       <a href="#" onclick="showTab('home')">Home</a>
-      <a href="#" onclick="showTab('camera')">Camera</a>
       <a href="#" onclick="showTab('sensors')">Sensors</a>
       <button onclick="gotoDatabase()" style="background:none;border:none;color:white;font-weight:bold;cursor:pointer;">Database</button>
     </nav>
@@ -111,7 +98,6 @@ const char index_html[] PROGMEM = R"rawliteral(
 
   <div class="tabs">
     <div id="home" class="tab-content active">
-      <img id="videoFeed" src="" alt="Camera Stream" />
       <h2>Driving Mode</h2>
       <div class="driving-buttons">
         <button onclick="sendDrivingMode(1)">Mode 1</button>
@@ -125,9 +111,6 @@ const char index_html[] PROGMEM = R"rawliteral(
         <h3>Light Right: <span id="light_right">0</span></h3>
         <p class="status" id="status">Connecting to WebSocket...</p>
       </div>
-    </div>
-    <div id="camera" class="tab-content">
-      <img id="videoFeedCam" src="" alt="Camera Stream" />
     </div>
     <div id="sensors" class="tab-content">
       <h2>Driving Mode</h2>
@@ -158,13 +141,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       document.body.innerHTML = '';
       window.location.replace('http://10.42.0.1:81');
     }
-    function loadMJPEG() {
-      const src = 'http://' + location.hostname + ':82/mjpeg';
-      document.getElementById('videoFeed').src = src;
-      document.getElementById('videoFeedCam').src = src;
-    }
-    loadMJPEG();
-    document.getElementById('videoFeedCam').addEventListener('error', () => setTimeout(loadMJPEG,2000));
 
     const ws = new WebSocket('ws://' + location.hostname + '/ws');
     const keysDown = new Set();
@@ -185,7 +161,6 @@ const char index_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
-
 )rawliteral";
 
-#endif 
+#endif

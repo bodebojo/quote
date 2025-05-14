@@ -1,4 +1,4 @@
-// all of the pins voor camer-mmain.h
+// all of the pins voor camera-main.h
 
 #ifndef CAMERA_PINS_H
 #define CAMERA_PINS_H
