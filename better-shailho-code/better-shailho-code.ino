@@ -1,90 +1,151 @@
 #include <Leaphyoriginal1.h>
-#include <SoftwareSerial.h> // For software serial communication if needed
+#include <SoftwareSerial.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
+
 #include "boot.h"
 #include "mode1.h"
 #include "mode2.h"
 #include "mode3.h"
 #include "mode4.h"
 #include "sensors.h"
-SoftwareSerial espSerial(13, 15); // Adjust pins if necessary
-LiquidCrystal_I2C lcd(0x3F,20,4);
 
-//config
+// ==================== CONFIG & GLOBALS ====================
+
+// I²C LCD (20×4) at 0x3F
+LiquidCrystal_I2C lcd(0x3F, 20, 4);
+
+// Software serial to ESP (RX=13, TX=15)
+SoftwareSerial espSerial(13, 15);
+
+// Whether to run the boot animation at startup
 bool do_boot = false;
-//varibalesa
-String mode;
-int right_speed = 0;
+
+// Current drive mode (1–4). Default to 0 (no mode)
+int modeInt = 0;
+
+// Non‐blocking serial‐line parsing buffer
+static const uint8_t SERIAL_BUF_LEN = 64;
+char serialBuf[SERIAL_BUF_LEN];
+uint8_t serialPos = 0;
+
+// Variables shared by modes & sensors
+String incomingData = "";
+int speed = 500;         // base speed (adjusted in mode1)
 int left_speed = 0;
-int default_speed = 100;
-int speed = 500;
-double avg_dis;  // Declaration of variable 'avg_dis' to store the average
-double light_left;
-double light_right;
-String incomingData;
-int modeInt;
+int right_speed = 0;
+int default_speed = 100; // used by mode2
 
-void setup(){
-  Serial.begin(115200); // Initialize serial communication with the computer
-  espSerial.begin(115200); // Initialize serial communication with the ESP
-  randomSeed(time(0));
-  boot();
+double avg_dis = 0;      // updated once per DISTANCE_INTERVAL_MS
+double light_left = 0;   // updated once per LIGHT_INTERVAL_MS
+double light_right = 0;
+
+// Timing for sensor updates (millis-based)
+const unsigned long DISTANCE_INTERVAL_MS = 200;
+const unsigned long LIGHT_INTERVAL_MS    = 500;
+unsigned long lastDistanceMillis = 0;
+unsigned long lastLightMillis    = 0;
+
+// ==================== FORWARD DECLARATIONS ====================
+
+// Serial handling
+void handleSerial();
+void handleMode();
+
+void setup() {
+  Serial.begin(115200);
+  espSerial.begin(115200);
+
+  // Seed random() from floating analog pin (A5) for mode3
+  randomSeed(analogRead(A5));
+
+  boot();  // run boot animation if do_boot == true
 }
 
-void loop(){
-readSerial();
-get_distance();
-get_light_info();
-handlemode();
+void loop() {
+  // 1) Non-blocking: check for incoming Serial lines
+  handleSerial();
 
-avg_dis = 0;
-}
+  // 2) Immediately run the selected mode (very fast path, no delay())
+  handleMode();
 
-void readSerial() {
-  if (Serial.available()) {
-    incomingData = Serial.readStringUntil('\n');
-    incomingData.trim();
-    Serial.println("IncomingData: " + String(incomingData));
+  // 3) Periodic distance update (one ultrasonic ping)
+  if (millis() - lastDistanceMillis >= DISTANCE_INTERVAL_MS) {
+    lastDistanceMillis = millis();
+    get_distance_one_shot();
+  }
+
+  // 4) Periodic light update (one analog read)
+  if (millis() - lastLightMillis >= LIGHT_INTERVAL_MS) {
+    lastLightMillis = millis();
+    get_light_one_shot();
   }
 }
 
-void handlemode() {
-  if (incomingData.startsWith("Mode:")) {
-    mode = incomingData.substring(String("Mode:").length());
-    mode.trim();  // Removes any extra whitespace
+// ==================== SERIAL HANDLING (NON-BLOCKING) ====================
 
-    modeInt = mode.toInt();  // Convert string to integer
-   } if (modeInt == 1) { 
+void handleSerial() {
+  while (Serial.available()) {
+    char c = Serial.read();
+
+    // If newline or carriage return: process buffer
+    if (c == '\n' || c == '\r') {
+      if (serialPos > 0) {
+        serialBuf[serialPos] = '\0';          // Null-terminate
+        String line = String(serialBuf);
+        line.trim();
+        Serial.println("IncomingData: " + line);
+
+        // If it's "Mode: X", update modeInt
+        if (line.startsWith("Mode:")) {
+          String tmp = line.substring(5);
+          tmp.trim();
+          int m = tmp.toInt();
+          if (m >= 1 && m <= 4) {
+            modeInt = m;
+            Serial.print(">> Set mode to ");
+            Serial.println(modeInt);
+          } else {
+            Serial.println(">> Invalid mode: " + tmp);
+          }
+        }
+        // Otherwise, if in mode1, pass Key commands
+        else if (modeInt == 1 &&
+                 (line.startsWith("Key Down:") || line.startsWith("Key Up:"))) {
+          incomingData = line;
+        }
+      }
+      // Reset buffer for next line
+      serialPos = 0;
+    }
+    else {
+      // Append char to buffer if space remains
+      if (serialPos < SERIAL_BUF_LEN - 1) {
+        serialBuf[serialPos++] = c;
+      }
+      // Else: overflow, ignore until newline
+    }
+  }
+}
+
+void handleMode() {
+  switch (modeInt) {
+    case 1:
       mode1();
-      // Serial.println("mode1 selected");
-    } else if (modeInt == 2) {
+      break;
+    case 2:
       mode2();
-    } else if (modeInt == 3) {
+      break;
+    case 3:
       mode3();
-    } else if (modeInt == 4) {
+      break;
+    case 4:
       mode4();
-    } else {
-      Serial.println("invalid driving mode detected");
-  }
-}
-
-
-void print_to_lcd(String text, String value, float delay_time, bool clear_screen) {
-  float pause_ms = delay_time * 1000;
-
-  lcd.setCursor(0, 0);
-  lcd.print(text);
-
-  lcd.setCursor(0, 1);
-  lcd.print(value);
-
-  delay(pause_ms);
-
-  if (clear_screen) {
-    lcd.clear();
+      break;
+    default:
+      // No valid mode selected: stop both motors
+      setMotor(10, 0);
+      setMotor(9,  0);
+      break;
   }
 }

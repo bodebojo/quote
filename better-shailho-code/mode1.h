@@ -1,66 +1,95 @@
 #ifndef MODE1_H
 #define MODE1_H
 
+#include <Arduino.h>
+
+// These globals are defined in main.ino:
 extern String incomingData;
 extern int speed;
 extern int left_speed;
 extern int right_speed;
 extern void setMotor(int motor, int speed);
 
-// Key states
-bool wPressed = false;
-bool aPressed = false;
-bool sPressed = false;
-bool dPressed = false;
-bool shiftPressed = false;
-
+// “Manual” drive via W/A/S/D keys
 void mode1() {
-    // Update key states based on incomingData
-    if (incomingData == "Key Down: Shift") shiftPressed = true;
-    else if (incomingData == "Key Up: Shift") shiftPressed = false;
-    else if (incomingData == "Key Down: w") wPressed = true;
-    else if (incomingData == "Key Up: w") wPressed = false;
-    else if (incomingData == "Key Down: s") sPressed = true;
-    else if (incomingData == "Key Up: s") sPressed = false;
-    else if (incomingData == "Key Down: a") aPressed = true;
-    else if (incomingData == "Key Up: a") aPressed = false;
-    else if (incomingData == "Key Down: d") dPressed = true;
-    else if (incomingData == "Key Up: d") dPressed = false;
+  // Key states persist between calls
+  static bool wPressed = false;
+  static bool aPressed = false;
+  static bool sPressed = false;
+  static bool dPressed = false;
+  static bool shiftPressed = false;
 
-    // Set base speed
-    speed = shiftPressed ? 250 : 500;
-    int turnOffset = speed / 3;
+  // Parse “Key Down:” / “Key Up:” from incomingData
+  if (incomingData.startsWith("Key Down:")) {
+    String key = incomingData.substring(9);
+    key.trim();
+    if (key == "w".lowered)        wPressed = true;
+    else if (key == "s")   sPressed = true;
+    else if (key == "a")   aPressed = true;
+    else if (key == "d")   dPressed = true;
+    else if (key == "Shift") shiftPressed = true;
+  }
+  else if (incomingData.startsWith("Key Up:")) {
+    String key = incomingData.substring(7);
+    key.trim();
+    if (key == "w")        wPressed = false;
+    else if (key == "s")   sPressed = false;
+    else if (key == "a")   aPressed = false;
+    else if (key == "d")   dPressed = false;
+    else if (key == "Shift") shiftPressed = false;
+  }
 
-    // Default motor speeds
-    left_speed = 0;
-    right_speed = 0;
+  // Clear incomingData to avoid re-processing
+  incomingData = "";
 
-    // Forward/Backward
-    if (wPressed) {
-        left_speed = speed;
-        right_speed = speed;
-    } else if (sPressed) {
-        left_speed = -speed;
-        right_speed = -speed;
-    }
+  // Compute base speed (Shift = half speed)
+  speed = shiftPressed ? 250 : 500;
+  int turnOffset = speed / 3;
+  int turnOffsettank = speed / 3.3;
+  // Start with motors stopped
+  left_speed  = 0;
+  right_speed = 0;
 
-    // Turning adjustments (only if moving)
+  // Forward/back commands
+  if (wPressed) {
+    left_speed  = speed;
+    right_speed = speed;
     if (aPressed) {
-        left_speed -= turnOffset;
-        right_speed += turnOffset;
+      left_speed  -= turnOffset;
+      right_speed += turnOffset;
     } else if (dPressed) {
-        left_speed += turnOffset;
-        right_speed -= turnOffset;
+      left_speed  += turnOffset;
+      right_speed -= turnOffset;
     }
+  }
+  else if (sPressed) {
+    left_speed  = -speed;
+    right_speed = -speed;
+    if (aPressed) {
+      left_speed  -= turnOffset;
+      right_speed += turnOffset;
+    } else if (dPressed) {
+      left_speed  += turnOffset;
+      right_speed -= turnOffset;
+    }
+  }
+  // Pivot in place if only A/D (no W/S)
+  else {
+    if (aPressed) {
+      left_speed  = -turnOffsettank;
+      right_speed =  turnOffsettank;
+    }
+    else if (dPressed) {
+      left_speed  =  turnOffsettank;
+      right_speed = -turnOffsettank;
+    }
+  }
 
-    // Clamp motor speeds to valid range
-    left_speed = constrain(left_speed, -1023, 1023);
-    right_speed = constrain(right_speed, -1023, 1023);
-
-    setMotor(10, left_speed);
-    setMotor(9, right_speed);
-
-    incomingData = "";
+  // Constrain and write to motors
+  left_speed  = constrain(left_speed,  -1023, 1023);
+  right_speed = constrain(right_speed, -1023, 1023);
+  setMotor(10, left_speed);
+  setMotor(9,  right_speed);
 }
 
 #endif
