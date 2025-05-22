@@ -23,27 +23,29 @@ void mode1() {
   if (incomingData.startsWith("Key Down:")) {
     String key = incomingData.substring(9);
     key.trim();
-    if (key == "w".lowered)        wPressed = true;
+    key.toLowerCase();
+    if (key == "w")        wPressed = true;
     else if (key == "s")   sPressed = true;
     else if (key == "a")   aPressed = true;
     else if (key == "d")   dPressed = true;
-    else if (key == "Shift") shiftPressed = true;
+    else if (key == "shift") shiftPressed = true;
   }
   else if (incomingData.startsWith("Key Up:")) {
     String key = incomingData.substring(7);
     key.trim();
+    key.toLowerCase();
     if (key == "w")        wPressed = false;
     else if (key == "s")   sPressed = false;
     else if (key == "a")   aPressed = false;
     else if (key == "d")   dPressed = false;
-    else if (key == "Shift") shiftPressed = false;
+    else if (key == "shift") shiftPressed = false;
   }
 
   // Clear incomingData to avoid re-processing
   incomingData = "";
 
   // Compute base speed (Shift = half speed)
-  speed = shiftPressed ? 250 : 500;
+  speed = shiftPressed ? 400 : 500;
   int turnOffset = speed / 3;
   int turnOffsettank = speed / 3.3;
   // Start with motors stopped

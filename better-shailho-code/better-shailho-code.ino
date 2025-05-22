@@ -63,10 +63,8 @@ void setup() {
 }
 
 void loop() {
-  // 1) Non-blocking: check for incoming Serial lines
   handleSerial();
 
-  // 2) Immediately run the selected mode (very fast path, no delay())
   handleMode();
 
   // 3) Periodic distance update (one ultrasonic ping)
@@ -109,6 +107,16 @@ void handleSerial() {
             Serial.println(">> Invalid mode: " + tmp);
           }
         }
+
+        if (line.startsWith("message_to_lcd:")){
+        String lcd_message = line.substring(11);
+        lcd_message.trim(); 
+        print_to_lcd("Message:", String(lcd_message), 0.0, false);
+        }
+
+        if (line.startsWith("clear_lcd")) {
+        print_to_lcd("", "", 0.0, true);
+        }
         // Otherwise, if in mode1, pass Key commands
         else if (modeInt == 1 &&
                  (line.startsWith("Key Down:") || line.startsWith("Key Up:"))) {
@@ -149,3 +157,4 @@ void handleMode() {
       break;
   }
 }
+
