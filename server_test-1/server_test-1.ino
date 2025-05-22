@@ -103,6 +103,13 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     } else if (message.startsWith("Button = Change Driving Mode:")) {
       String mode = message.substring(String("Button = Change Driving Mode:").length());
       Serial.println("Mode: " + mode);  // Handle driving mode change
+    
+    } else if (message.startsWith("lcdMesage:")) {
+      String lcd_mesage = message.substring(10);
+      Serial.println("message_to_lcd: " + lcd_mesage);
+    
+    } else if  (message.startsWith("Clearlcd")) {
+      Serial.println("clear_lcd");
 
     } else {
       Serial.println("Received unknown message: " + message);  // Handle unknown message

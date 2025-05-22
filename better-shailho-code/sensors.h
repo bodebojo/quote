@@ -22,7 +22,7 @@ void get_distance_one_shot() {
   avg_dis = raw;
 
   // Update LCD (no delay):
-  //print_to_lcd("AVG Distance:", String(avg_dis, 1), 0.0, false);
+  // print_to_lcd("AVG Distance:", String(avg_dis, 1), 0.0, false);
 
   // Print to Serial once per second
   if (millis() - lastPrint >= PRINT_INTERVAL) {

@@ -1,7 +1,6 @@
 #ifndef INDEX_HTML_H
 #define INDEX_HTML_H
 
-// HTML page to be served to the client, stored in flash memory (PROGMEM)
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +87,16 @@ const char index_html[] PROGMEM = R"rawliteral(
       transform: translateY(-2px);
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
+    .lcd-input {
+      margin-top: 1rem;
+    }
+    .lcd-input input {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
     @media (max-width: 600px) {
       header .menu-toggle { display: block; }
       nav { display: none; flex-direction: column; background: #4CAF50; padding: 1rem; }
@@ -125,10 +134,17 @@ const char index_html[] PROGMEM = R"rawliteral(
         <h3>Light Right: <span id="light_right">0</span></h3>
         <p class="status" id="status">Connecting to WebSocket...</p>
       </div>
+      <div class="lcd-input">
+        <h3>Send LCD Message:</h3>
+        <input type="text" id="lcdInput2" placeholder="Type message and press Enter">
+        <button onclick="clearLcd()">Clear LCD</button>
+      </div>
     </div>
+
     <div id="camera" class="tab-content">
       <img id="videoFeedCam" src="" alt="Camera Stream" />
     </div>
+
     <div id="sensors" class="tab-content">
       <h2>Driving Mode</h2>
       <div class="driving-buttons">
@@ -143,6 +159,11 @@ const char index_html[] PROGMEM = R"rawliteral(
         <h3>Light Right: <span id="light_right2">0</span></h3>
         <p class="status" id="status2">Connecting to WebSocket...</p>
       </div>
+      <div class="lcd-input">
+        <h3>Send LCD Message:</h3>
+        <input type="text" id="lcdInput2" placeholder="Type message and press Enter">
+        <button onclick="clearLcd()">Clear LCD</button>
+      </div>
     </div>
   </div>
 
@@ -154,7 +175,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       document.getElementById(id).classList.add('active');
     }
     function gotoDatabase() {
-      // Remove ESP dashboard content and navigate
       document.body.innerHTML = '';
       window.location.replace('http://10.42.0.1:81');
     }
@@ -168,24 +188,76 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     const ws = new WebSocket('ws://' + location.hostname + '/ws');
     const keysDown = new Set();
+
     ws.onopen = () => {
-      ['status','status2'].forEach(id => { const el = document.getElementById(id); el.textContent='WS Connected'; el.style.color='green'; });
+      ['status','status2'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent='WS Connected';
+        el.style.color='green';
+      });
     };
+
     ws.onmessage = evt => {
       const d = evt.data;
       if (d.startsWith('distance:')) update('distance','distance2',d);
       if (d.startsWith('Light Left:')) update('light_left','light_left2',d);
       if (d.startsWith('Light Right:')) update('light_right','light_right2',d);
     };
+
     ws.onclose = () => setTimeout(() => location.reload(),2000);
-    function update(id1,id2,msg) { const val = msg.split(':')[1]; document.getElementById(id1).textContent=val; document.getElementById(id2).textContent=val; }
-    function sendDrivingMode(m) { if (ws.readyState === 1) ws.send('Button = Change Driving Mode: '+m); }
-    document.addEventListener('keydown', e => { if (!keysDown.has(e.key)) { keysDown.add(e.key); if(ws.readyState===1) ws.send('KeyDown:'+e.key); } });
-    document.addEventListener('keyup', e => { if (keysDown.has(e.key)) { keysDown.delete(e.key); if(ws.readyState===1) ws.send('KeyUp:'+e.key); } });
+
+    function update(id1,id2,msg) {
+      const val = msg.split(':')[1];
+      document.getElementById(id1).textContent = val;
+      document.getElementById(id2).textContent = val;
+    }
+
+    function sendDrivingMode(m) {
+      if (ws.readyState === 1) ws.send('Button = Change Driving Mode: ' + m);
+    }
+
+    function clearLcd() {
+      if (ws.readyState === 1) ws.send('Clearlcd');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (!keysDown.has(e.key)) {
+        keysDown.add(e.key);
+        if (ws.readyState === 1) ws.send('KeyDown:' + e.key);
+      }
+    });
+
+    document.addEventListener('keyup', e => {
+      if (keysDown.has(e.key)) {
+        keysDown.delete(e.key);
+        if (ws.readyState === 1) ws.send('KeyUp:' + e.key);
+      }
+    });
+
+    // LCD Input for Home tab
+    document.getElementById('lcdInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const val = this.value.trim();
+        if (val && ws.readyState === 1) {
+          ws.send('lcdMesage:' + val);
+          this.value = '';
+        }
+      }
+    });
+
+    // LCD Input for Sensors tab
+    document.getElementById('lcdInput2').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const val = this.value.trim();
+        if (val && ws.readyState === 1) {
+          ws.send('lcdMesage:' + val);
+          this.value = '';
+        }
+      }
+    });
   </script>
 </body>
 </html>
-
 )rawliteral";
 
-#endif 
+#endif
