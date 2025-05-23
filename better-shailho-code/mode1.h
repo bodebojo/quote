@@ -58,10 +58,10 @@ void mode1() {
     left_speed  = speed-leftSpeedOffset;
     right_speed = speed;
     if (aPressed) {
-      left_speed  -= turnOffset-leftSpeedOffset;
-      right_speed += turnOffset;
+      left_speed  -= turnOffset;
+      right_speed += turnOffset+leftSpeedOffset;
     } else if (dPressed) {
-      left_speed  += turnOffset+leftSpeedOffset;
+      left_speed  += turnOffset-leftSpeedOffset;
       right_speed -= turnOffset;
     }
   }
@@ -69,10 +69,10 @@ void mode1() {
     left_speed  = -speed+leftSpeedOffset;
     right_speed = -speed;
     if (aPressed) {
-      left_speed  -= turnOffset+leftSpeedOffset;
+      left_speed  -= turnOffset;
       right_speed += turnOffset;
     } else if (dPressed) {
-      left_speed  += turnOffset-leftSpeedOffset;
+      left_speed  += turnOffset;
       right_speed -= turnOffset;
     }
   }
