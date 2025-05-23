@@ -109,9 +109,10 @@ void handleSerial() {
         }
 
         if (line.startsWith("message_to_lcd:")){
-        String lcd_message = line.substring(11);
-        lcd_message.trim(); 
-        print_to_lcd("Message:", String(lcd_message), 0.0, false);
+        String lcd_message = line.substring(15);
+        lcd_message.trim();
+        print_to_lcd("", "", 0.0, true);
+        print_to_lcd(String(lcd_message), "", 0.0, false);
         }
 
         if (line.startsWith("clear_lcd")) {

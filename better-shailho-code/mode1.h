@@ -48,30 +48,31 @@ void mode1() {
   speed = shiftPressed ? 400 : 500;
   int turnOffset = speed / 3;
   int turnOffsettank = speed / 3.3;
+  int leftSpeedOffset = 40;
   // Start with motors stopped
   left_speed  = 0;
   right_speed = 0;
 
   // Forward/back commands
   if (wPressed) {
-    left_speed  = speed;
+    left_speed  = speed-leftSpeedOffset;
     right_speed = speed;
     if (aPressed) {
-      left_speed  -= turnOffset;
+      left_speed  -= turnOffset-leftSpeedOffset;
       right_speed += turnOffset;
     } else if (dPressed) {
-      left_speed  += turnOffset;
+      left_speed  += turnOffset+leftSpeedOffset;
       right_speed -= turnOffset;
     }
   }
   else if (sPressed) {
-    left_speed  = -speed;
+    left_speed  = -speed+leftSpeedOffset;
     right_speed = -speed;
     if (aPressed) {
-      left_speed  -= turnOffset;
+      left_speed  -= turnOffset+leftSpeedOffset;
       right_speed += turnOffset;
     } else if (dPressed) {
-      left_speed  += turnOffset;
+      left_speed  += turnOffset-leftSpeedOffset;
       right_speed -= turnOffset;
     }
   }

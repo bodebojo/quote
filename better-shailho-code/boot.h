@@ -108,17 +108,56 @@ void boot() {
 
 // Print a two‐line message on the LCD, then optionally delay & clear
 void print_to_lcd(String text, String value, float delay_time, bool clear_screen) {
+  String message = text + " " + value;
+  message.trim(); // Remove extra spaces
   float pause_ms = delay_time * 1000.0;
-  lcd.setCursor(0, 0);
-  lcd.print(text);
-  lcd.setCursor(0, 1);
-  lcd.print(value);
-  if (pause_ms > 0) {
-    delay((int)pause_ms);
-  }
+
   if (clear_screen) {
     lcd.clear();
   }
+
+  int msgLen = message.length();
+
+  if (msgLen <= 16) {
+    // Fits in one line
+    lcd.setCursor(0, 0);
+    lcd.print(message);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
+  } else if (msgLen <= 32) {
+    // Word-wrap for two lines
+    int splitPos = message.lastIndexOf(' ', 16); // Try to split at a space
+    if (splitPos == -1) splitPos = 16; // No space found, force split
+
+    String top = message.substring(0, splitPos);
+    String bottom = message.substring(splitPos);
+    bottom.trim(); // Trim leading space
+
+    lcd.setCursor(0, 0);
+    lcd.print(top);
+    lcd.setCursor(0, 1);
+    lcd.print(bottom);
+  } else {
+    // Scroll top line only
+    String scrollMessage = message + "                "; // Pad with spaces to scroll out
+    int scrollLen = scrollMessage.length();
+
+    for (int i = 0; i <= scrollLen - 16; i++) {
+      lcd.setCursor(0, 0);
+      lcd.print(scrollMessage.substring(i, i + 16));
+      lcd.setCursor(0, 1);
+      lcd.print("                "); // Keep bottom line empty
+      delay(600); // Scroll speed
+    }
+  }
+
+  if (pause_ms > 0) {
+    delay((int)pause_ms);
+  }
 }
+
+
+
+
 
 #endif
