@@ -1,2 +1,2 @@
 # leaphy-bot
-## nodemcu1.0
+## Esp32s3
